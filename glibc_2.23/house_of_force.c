@@ -5,7 +5,7 @@
    If RELRO is enabled you can always try to return a chunk on the stack as proposed in Malloc Des Maleficarum 
    ( http://phrack.org/issues/66/10.html )
 
-   Tested in Ubuntu 14.04, 64bit.
+   Tested in Ubuntu 14.04, 64bit, Ubuntu 18.04
 
 */
 
@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <malloc.h>
+#include <assert.h>
 
 char bss_var[] = "This is a string that we want to overwrite.";
 
@@ -79,6 +80,8 @@ int main(int argc , char* argv[])
 	fprintf(stderr, "... doing strcpy overwrite with \"YEAH!!!\"...\n");
 	strcpy(ctr_chunk, "YEAH!!!");
 	fprintf(stderr, "... new string: %s\n", bss_var);
+
+	assert(ctr_chunk == bss_var);
 
 
 	// some further discussion:
